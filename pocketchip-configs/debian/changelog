@@ -1,3 +1,36 @@
+pocketchip-configs (0.8) trixie; urgency=low
+
+  * skel/.config/awesome/rc.lua: port from the awesome 3.4/3.5 API to awesome 4.x
+    (trixie). The old config called awesome.add_signal / client.add_signal /
+    awful.util.spawn* / screen.count(), all removed in awesome 4.0, so rc.lua
+    threw on startup and awesome silently fell back to its default config -- none
+    of the PocketCHIP session (keymap, brightness, onboard, cursor hide,
+    pocket-home) ran. Now uses connect_signal, awful.spawn(.with_shell),
+    awful.screen.connect_for_each_screen, gears.table.join, and sets the
+    boot-splash wallpaper via gears.wallpaper (theme.wallpaper_cmd/awsetbg is
+    gone in 4.x). Behaviour preserved: single fullscreen tag, no wibar, the
+    PocketCHIP key/mouse bindings, and the home-screen/onboard client tracking.
+  * X11/xorg.conf.d/99-calibration.conf: port the touchscreen calibration from
+    the old evdev "Calibration"/"SwapAxes" options (ignored by trixie's libinput
+    driver) to a libinput "CalibrationMatrix". The panel was reporting raw,
+    180-deg-rotated coordinates (finger down => pointer up, left => right); the
+    "-1 0 1 0 -1 1 0 0 1" matrix flips both axes. Note: the sun4i-ts driver
+    ignores the DT touchscreen-inverted-x/y props, so this must be done in X.
+  * skel/.config/lxterminal/lxterminal.conf: ship a small-screen terminal config
+    (Monospace 8, scrollbar + menubar hidden) for lxterminal, the GTK3 stand-in
+    for the old GTK2 vala-terminal; point rc.lua's terminal at lxterminal.
+  * skel/sunvox_config.ini: drop it -- the proprietary SunVox is no longer
+    shipped (pocket-home's "Make Music" button now launches goattracker).
+  * X11/xorg.conf.d/30-pocketchip-keyboard.conf: new -- set XkbLayout "pocketchip"
+    for the keyboard at X server start so the Fn-layer function keys work
+    regardless of the WM (previously only awesome's setxkbmap applied it, so a
+    failed WM config left F1-F11 dead).
+  * X11/xorg.conf.d/99-calibration.conf: use the pocketchip-debian-builder's
+    tuned touch matrix (-1 0 1 0 -1.18 1.09 0 0 1; scales/offsets Y, not just a
+    flat 180 flip) and ignore the rtp's legacy /dev/input/mouse* node.
+
+ -- Ben Young <computermouth@proton.me>  Thu, 18 Jun 2026 02:45:00 -0500
+
 pocketchip-configs (0.7) trixie; urgency=low
 
   * skel: make the awesome theme path + the GTK2 ".mine" include home-agnostic

@@ -1,11 +1,23 @@
+-- PocketC.H.I.P. awesome config, ported from the original NTC awesome 3.4/3.5
+-- config to awesome 4.x (the version in Debian trixie). The 3.x API this used --
+-- awesome.add_signal / client.add_signal / awful.util.spawn* / screen.count() --
+-- was removed in 4.0, which made the old rc.lua throw on startup and fall back
+-- to awesome's default config (so none of the PocketCHIP session ran).
+--
+-- Minimal by design: a single fullscreen tag, no wibar/titlebars, the home
+-- screen (pocket-home) + onboard launched at startup, and the hardware keys
+-- wired the PocketCHIP way.
+
 -- Standard awesome library
-require("awful")
+local gears = require("gears")
+local awful = require("awful")
 require("awful.autofocus")
-require("awful.rules")
 -- Theme handling library
-require("beautiful")
+local beautiful = require("beautiful")
 -- Notification library
-require("naughty")
+local naughty = require("naughty")
+-- Rules (the require installs the manage-signal hook that applies them)
+require("awful.rules")
 
 local USE_DBG = false
 dbg = function (msg)
@@ -34,7 +46,7 @@ end
 -- Handle runtime errors after startup
 do
     local in_error = false
-    awesome.add_signal("debug::error", function (err)
+    awesome.connect_signal("debug::error", function (err)
         if USE_DBG then
             -- Make sure we don't go into an endless error loop
             if in_error then return end
@@ -42,7 +54,7 @@ do
 
             naughty.notify({ preset = naughty.config.presets.critical,
                              title = "Oops, an error happened!",
-                             text = err })
+                             text = tostring(err) })
             in_error = false
         end
     end)
@@ -54,10 +66,10 @@ onboard = {}
 home_screen = {}
 
 focus_next_client = function ()
-    if awful.client.next(1) == home_screen.client then
-        awful.client.focus.byidx( 2 )
-    else
-        awful.client.focus.byidx( 1 )
+    awful.client.focus.byidx(1)
+    -- never land on the home screen (pocket-home); skip past it
+    if client.focus and client.focus == home_screen.client then
+        awful.client.focus.byidx(1)
     end
 
     if client.focus then
@@ -81,7 +93,7 @@ launch_home_screen = function ()
         client:kill()
         home_screen = {}
     end
-    awful.util.spawn_with_shell("pocket-home")
+    awful.spawn.with_shell("pocket-home")
 end
 
 focus_home_screen = function ()
@@ -97,7 +109,7 @@ end
 
 hide_mouse_cursor = function ()
     -- hide mouse pointer on root window
-    awful.util.spawn_with_shell("xsetroot -cursor $HOME/.config/awesome/blank_ptr.xbm $HOME/.config/awesome/blank_ptr.xbm")
+    awful.spawn.with_shell("xsetroot -cursor $HOME/.config/awesome/blank_ptr.xbm $HOME/.config/awesome/blank_ptr.xbm")
 end
 -- }}}
 
@@ -106,7 +118,7 @@ end
 beautiful.init(os.getenv("HOME") .. "/.config/awesome/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
-local terminal = "x-terminal-emulator"
+local terminal = "lxterminal"
 local editor = os.getenv("EDITOR") or "editor"
 local editor_cmd = terminal .. " -e " .. editor
 
@@ -117,50 +129,43 @@ local editor_cmd = terminal .. " -e " .. editor
 -- However, you can use another modifier like Mod1, but it may interact with others.
 local modkey = "Mod1"
 
--- Table of layouts to cover with awful.layout.inc, order matters.
-local layouts =
-{
-    -- awful.layout.suit.floating,
-    -- awful.layout.suit.tile,
-    -- awful.layout.suit.tile.left,
-    -- awful.layout.suit.tile.bottom,
-    -- awful.layout.suit.tile.top,
-    -- awful.layout.suit.fair,
-    -- awful.layout.suit.fair.horizontal,
-    -- awful.layout.suit.spiral,
-    -- awful.layout.suit.spiral.dwindle,
-    -- awful.layout.suit.max,
-    awful.layout.suit.max.fullscreen,
-    -- awful.layout.suit.magnifier
-}
+-- The only layout PocketCHIP uses: one app, fullscreen.
+awful.layout.layouts = { awful.layout.suit.max.fullscreen }
 -- }}}
 
--- {{{ Tags
--- Define a tag table which hold all screen tags.
-local tags = {}
-for s = 1, screen.count() do
-    -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1 }, s, layouts[1])
+-- {{{ Wallpaper + per-screen tag
+-- 4.x sets the wallpaper from here (theme.wallpaper_cmd/awsetbg is gone).
+local function set_wallpaper(s)
+    gears.wallpaper.maximized("/usr/share/pocketchip/boot-splash.png", s, true)
 end
+
+-- re-apply on resolution changes
+screen.connect_signal("property::geometry", set_wallpaper)
+
+awful.screen.connect_for_each_screen(function(s)
+    set_wallpaper(s)
+    -- a single tag, fullscreen layout
+    awful.tag({ "1" }, s, awful.layout.layouts[1])
+end)
 -- }}}
 
 -- {{{ Mouse bindings
-root.buttons(awful.util.table.join(
+root.buttons(gears.table.join(
     awful.button({ }, 4, awful.tag.viewnext),
     awful.button({ }, 5, awful.tag.viewprev)
 ))
 -- }}}
 
 -- {{{ Key bindings
-local globalkeys = awful.util.table.join(
+local globalkeys = gears.table.join(
     awful.key({ }                  , "XF86PowerOff", focus_home_screen),
     awful.key({ modkey,           }, "Tab", focus_next_client),
     awful.key({ "Control",        }, "Tab", focus_next_client),
-    awful.key({ modkey,           }, "Return", function () awful.util.spawn("dmenu_run", false) end)
+    awful.key({ modkey,           }, "Return", function () awful.spawn("dmenu_run", false) end)
 )
 
-local clientkeys = awful.util.table.join(
-    awful.key({ "Control"         }, "q", 
+local clientkeys = gears.table.join(
+    awful.key({ "Control"         }, "q",
         function (c)
             if c ~= home_screen.client then
                 c:kill()
@@ -168,18 +173,12 @@ local clientkeys = awful.util.table.join(
         end)
 )
 
--- Compute the maximum number of digit we need, limited to 9
-local keynumber = 0
-for s = 1, screen.count() do
-    keynumber = math.min(9, math.max(#tags[s], keynumber));
-end
-
-local clientbuttons = awful.util.table.join(
+local clientbuttons = gears.table.join(
     awful.button({ }, 1, function (c) client.focus = c; c:raise() end),
-    -- left click and mode allows you to move windows
+    -- left click and mod allows you to move windows
     awful.button({ modkey }, 1, awful.mouse.client.move),
     -- right click when holding mod
-    awful.button({ "Control" }, 1, function (c) awful.util.spawn("xdotool click 3", false) end))
+    awful.button({ "Control" }, 1, function (c) awful.spawn("xdotool click 3", false) end))
 
 -- Set global keys
 root.keys(globalkeys)
@@ -191,7 +190,7 @@ awful.rules.rules = {
     { rule = { },
       properties = { border_width = 0,
                      border_color = beautiful.border_normal,
-                     focus = true,
+                     focus = awful.client.focus.filter,
                      keys = clientkeys,
                      buttons = clientbuttons } }
 }
@@ -200,18 +199,18 @@ awful.rules.rules = {
 -- {{{ Signals
 -- Signal function to execute when a new client appears.
 
-client.add_signal("focus", function (c)
+client.connect_signal("focus", function (c)
   hide_mouse_cursor()
 end)
 
-client.add_signal("unfocus", function (c)
+client.connect_signal("unfocus", function (c)
   if c == onboard.client then
-      awful.util.spawn("xdotool search --name ahoy windowactivate", false)
+      awful.spawn("xdotool search --name ahoy windowactivate", false)
   end
 end)
 
-client.add_signal("manage", function (c, startup)
-    -- match homescreen by pid
+client.connect_signal("manage", function (c)
+    -- match homescreen by name
     if c.name == "pocket-home" then
         home_screen.client = c
     -- match onboarding by class
@@ -220,8 +219,8 @@ client.add_signal("manage", function (c, startup)
         c.ontop = true
     end
 
-    if not startup then
-      -- Put windows in a smart way, only if they does not set an initial position.
+    if not awesome.startup then
+      -- Put windows in a smart way, only if they do not set an initial position.
       if not c.size_hints.user_position and not c.size_hints.program_position then
           awful.placement.no_overlap(c)
           awful.placement.no_offscreen(c)
@@ -230,10 +229,10 @@ client.add_signal("manage", function (c, startup)
 end)
 
 -- cleanup watched clients
--- FIXME: make sure to ignore if we don't have a client, 
+-- FIXME: make sure to ignore if we don't have a client,
 -- apparently it's possible for unmanage to be called before manage
 -- when certain applications first open.
-client.add_signal("unmanage", function (c)
+client.connect_signal("unmanage", function (c)
     -- match homescreen
     if c.name == "pocket-home" then
         home_screen = {}
@@ -248,15 +247,14 @@ end)
 hide_mouse_cursor()
 
 -- load keymapping
-awful.util.spawn_with_shell("setxkbmap pocketchip")
+awful.spawn.with_shell("setxkbmap pocketchip")
 
 -- do screen brightness management
-awful.util.spawn_with_shell("/usr/sbin/pocketchip-load")
+awful.spawn.with_shell("/usr/sbin/pocketchip-load")
 
 -- launch onboarding
-awful.util.spawn_with_shell("onboard $HOME/.config/onboard /usr/share/pocketchip-onboard/")
+awful.spawn.with_shell("onboard $HOME/.config/onboard /usr/share/pocketchip-onboard/")
 
 -- launch home screen
 launch_home_screen()
 -- }}}
-
