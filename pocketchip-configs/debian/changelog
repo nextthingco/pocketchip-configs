@@ -1,3 +1,14 @@
+pocketchip-configs (0.7) trixie; urgency=low
+
+  * skel: make the awesome theme path + the GTK2 ".mine" include home-agnostic
+    ($HOME / a relative include instead of a hardcoded /home/chip) so the
+    /etc/skel copies work for any user account, not just one named "chip".
+  * skel/.gtkrc-2.0: use the stock Adwaita GTK + icon theme instead of the
+    custom "Chip" theme / "Faenza-Dark" icons, dropping the chip-theme and
+    faenza-icon-theme dependencies; small-screen widget/font tweaks kept.
+
+ -- Ben Young <computermouth@proton.me>  Wed, 17 Jun 2026 12:00:00 -0500
+
 pocketchip-configs (0.6) stable; urgency=low
 
   * Keymap fixes.
