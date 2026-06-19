@@ -1,3 +1,9 @@
+pocketchip-configs (0.9) trixie; urgency=low
+
+  * fix the power button?
+
+ -- Ben Young <computermouth@proton.me>  Fri, 18 Jun 2026 02:45:00 -0500
+
 pocketchip-configs (0.8) trixie; urgency=low
 
   * skel/.config/awesome/rc.lua: port from the awesome 3.4/3.5 API to awesome 4.x
