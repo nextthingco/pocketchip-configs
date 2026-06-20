@@ -1,3 +1,15 @@
+pocketchip-configs (1.0) trixie; urgency=low
+
+  * Split the shared/hardware configs out into chip-configs (asound, sun4i-ts
+    touch calibration + udev, PocketCHIP keyboard, backlight udev, logind
+    power-key) and chip-desktop-configs (GTK theme, leafpad, tint2 panel + openbox
+    autostart). This package is now pocketchip-exclusive: the awesome session
+    (rc.lua/theme/blank_ptr), boot splash, stalonetray + pd settings. Depends on
+    chip-desktop-configs (which Depends on chip-configs) so the full stack still
+    lands on the pocketchip image.
+
+ -- Ben Young <computermouth@proton.me>  Thu, 19 Jun 2026 13:30:00 -0500
+
 pocketchip-configs (0.9) trixie; urgency=low
 
   * fix the power button?

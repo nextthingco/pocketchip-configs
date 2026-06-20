@@ -1,1 +1,0 @@
-ACTION=="add", SUBSYSTEM=="input", DRIVERS=="sun4i-ts", SYMLINK+="input/sun4i-ts-%k"
