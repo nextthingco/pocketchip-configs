@@ -1,0 +1,30 @@
+# DO NOT EDIT! This file will be overwritten by LXAppearance.
+# Any customization should be done in ~/.gtkrc-2.0.mine instead.
+
+include ".gtkrc-2.0.mine"
+gtk-theme-name="Adwaita"
+gtk-icon-theme-name="Adwaita"
+gtk-icon-sizes = "panel-menu=16,16:panel=16,16:gtk-menu=16,16:gtk-large-toolbar=16,16:gtk-small-toolbar=16,16:gtk-button=16,16"
+gtk-font-name="Sans 7"
+gtk-cursor-theme-size=0
+gtk-toolbar-style=GTK_TOOLBAR_BOTH
+gtk-toolbar-icon-size=GTK_ICON_SIZE_SMALL_TOOLBAR
+gtk-button-images=0
+gtk-menu-images=0
+gtk-enable-event-sounds=0
+gtk-enable-input-feedback-sounds=0
+gtk-xft-antialias=0
+gtk-xft-hinting=0
+gtk-xft-hintstyle="hintfull"
+
+style "crunchwashere"
+{
+  GtkScrollbar::slider-width=20
+  GtkScrollbar::min_slider_length=20
+}
+style "heretoo"
+{
+  GtkRange::stepper_size=20
+}
+class "GtkScrollbar" style "crunchwashere"
+class "GtkRange" style "heretoo"
